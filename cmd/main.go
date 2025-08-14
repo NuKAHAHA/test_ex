@@ -16,17 +16,14 @@ import (
 )
 
 func main() {
-	// Инициализируем логгер
+	// Инициализация
 	logg := logger.NewAsyncLogger(os.Stdout, 2048)
 
-	// Репозиторий и сервис
 	taskRepo := repo.NewMemoryTaskRepo(logg)
 	taskService := service.NewTaskService(taskRepo, logg)
 
-	// Роутер
 	mux := handler.NewRouter(taskService, logg)
 
-	// HTTP сервер
 	srv := &http.Server{
 		Addr:              ":8080",
 		Handler:           mux,
@@ -34,7 +31,6 @@ func main() {
 		IdleTimeout:       60 * time.Second,
 	}
 
-	// Запуск сервера
 	go func() {
 		log.Println("Server started on :8080")
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {

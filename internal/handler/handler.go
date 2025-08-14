@@ -122,14 +122,12 @@ func (h *TaskHandler) List(w http.ResponseWriter, r *http.Request) {
 	helper.JSON(w, http.StatusOK, tasks)
 }
 
-// Универсальный метод для логирования ошибок и ответа клиенту
 func (h *TaskHandler) logAndRespondError(w http.ResponseWriter, r *http.Request, err error, action string, extraMeta ...any) {
 	meta := map[string]any{
 		"method": r.Method,
 		"path":   r.URL.Path,
 		"error":  err.Error(),
 	}
-	// extraMeta: ключ, значение, ключ, значение...
 	for i := 0; i < len(extraMeta)-1; i += 2 {
 		key, ok := extraMeta[i].(string)
 		if ok {
