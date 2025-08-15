@@ -5,31 +5,37 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"os/signal"
-	"syscall"
 	"time"
 
 	"awesomeProject/internal/handler"
 	"awesomeProject/internal/repo"
 	"awesomeProject/internal/service"
 	"awesomeProject/internal/utils/logger"
+	"awesomeProject/internal/utils/shuwdown"
 )
 
 func main() {
-	// Инициализация
+	sm := shutdown.New(5 * time.Second)
+
 	logg := logger.NewAsyncLogger(os.Stdout, 2048)
+	sm.Register(func(ctx context.Context) error {
+		return logg.Close(ctx)
+	})
 
 	taskRepo := repo.NewMemoryTaskRepo(logg)
 	taskService := service.NewTaskService(taskRepo, logg)
 
-	mux := handler.NewRouter(taskService, logg)
-
 	srv := &http.Server{
 		Addr:              ":8080",
-		Handler:           mux,
+		Handler:           handler.NewRouter(taskService, logg),
 		ReadHeaderTimeout: 5 * time.Second,
 		IdleTimeout:       60 * time.Second,
 	}
+
+	sm.Register(func(ctx context.Context) error {
+		log.Println("Stopping HTTP server...")
+		return srv.Shutdown(ctx)
+	})
 
 	go func() {
 		log.Println("Server started on :8080")
@@ -38,23 +44,5 @@ func main() {
 		}
 	}()
 
-	stop := make(chan os.Signal, 1)
-	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
-	<-stop
-	log.Println("Shutting down server...")
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	// Останавливаем HTTP сервер
-	if err := srv.Shutdown(ctx); err != nil {
-		log.Printf("Server shutdown error: %v", err)
-	}
-
-	// Закрываем логгер
-	if err := logg.Close(ctx); err != nil {
-		log.Printf("Logger close error: %v", err)
-	}
-
-	log.Println("Server stopped")
+	sm.Wait()
 }
