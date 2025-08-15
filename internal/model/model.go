@@ -27,5 +27,6 @@ type Task struct {
 
 func IsValidStatus(s string) bool {
 	_, ok := allowedStatuses[s]
+
 	return ok
 }

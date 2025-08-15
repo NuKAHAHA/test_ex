@@ -19,24 +19,28 @@ type TaskHandler struct {
 }
 
 func NewTaskHandler(svc *service.TaskService, log *logger.AsyncLogger) *TaskHandler {
+
 	return &TaskHandler{svc: svc, logger: log}
 }
 
-// Маппинг ошибок на HTTP-статусы
+// Маппинг ошибок
 func httpStatusFromError(err error) int {
 	switch err {
 	case nil:
+
 		return http.StatusOK
 	case errs.ErrNotFound:
+
 		return http.StatusNotFound
 	case errs.ErrBadRequest:
+
 		return http.StatusBadRequest
 	default:
+
 		return http.StatusInternalServerError
 	}
 }
 
-// Create task
 func (h *TaskHandler) Create(w http.ResponseWriter, r *http.Request) {
 	h.logger.Log(logger.Event{
 		Time:   time.Now().UTC(),
@@ -47,12 +51,14 @@ func (h *TaskHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var req model.Task
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		h.logAndRespondError(w, r, errs.ErrBadRequest, "invalid_json")
+
 		return
 	}
 
 	task, err := h.svc.Create(r.Context(), req.Title, req.Description, req.Status)
 	if err != nil {
 		h.logAndRespondError(w, r, err, "create_task_error")
+
 		return
 	}
 
@@ -65,7 +71,6 @@ func (h *TaskHandler) Create(w http.ResponseWriter, r *http.Request) {
 	helper.JSON(w, http.StatusCreated, task)
 }
 
-// Get task by ID
 func (h *TaskHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	h.logger.Log(logger.Event{
 		Time:   time.Now().UTC(),
@@ -76,11 +81,13 @@ func (h *TaskHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	id := r.URL.Path[len("/tasks/"):]
 	if id == "" {
 		helper.ErrorJSON(w, http.StatusBadRequest, "missing task ID")
+
 		return
 	}
 	task, err := h.svc.Get(r.Context(), id)
 	if err != nil {
 		h.logAndRespondError(w, r, err, "get_task_error", "task_id", id)
+
 		return
 	}
 
@@ -93,7 +100,6 @@ func (h *TaskHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	helper.JSON(w, http.StatusOK, task)
 }
 
-// List tasks
 func (h *TaskHandler) List(w http.ResponseWriter, r *http.Request) {
 	h.logger.Log(logger.Event{
 		Time:   time.Now().UTC(),
@@ -102,6 +108,7 @@ func (h *TaskHandler) List(w http.ResponseWriter, r *http.Request) {
 	})
 
 	status := r.URL.Query().Get("status")
+
 	var filter *string
 	if status != "" {
 		filter = &status
@@ -110,6 +117,7 @@ func (h *TaskHandler) List(w http.ResponseWriter, r *http.Request) {
 	tasks, err := h.svc.List(r.Context(), filter)
 	if err != nil {
 		h.logAndRespondError(w, r, err, "list_tasks_error")
+
 		return
 	}
 
@@ -128,8 +136,10 @@ func (h *TaskHandler) logAndRespondError(w http.ResponseWriter, r *http.Request,
 		"path":   r.URL.Path,
 		"error":  err.Error(),
 	}
+
 	for i := 0; i < len(extraMeta)-1; i += 2 {
 		key, ok := extraMeta[i].(string)
+
 		if ok {
 			meta[key] = extraMeta[i+1]
 		}

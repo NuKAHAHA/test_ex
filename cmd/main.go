@@ -19,6 +19,7 @@ func main() {
 
 	logg := logger.NewAsyncLogger(os.Stdout, 2048)
 	sm.Register(func(ctx context.Context) error {
+
 		return logg.Close(ctx)
 	})
 
@@ -34,12 +35,14 @@ func main() {
 
 	sm.Register(func(ctx context.Context) error {
 		log.Println("Stopping HTTP server...")
+
 		return srv.Shutdown(ctx)
 	})
 
 	go func() {
 		log.Println("Server started on :8080")
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+
 			log.Fatalf("ListenAndServe error: %v", err)
 		}
 	}()

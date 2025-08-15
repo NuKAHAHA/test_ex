@@ -43,6 +43,7 @@ func (m *Manager) Wait() {
 	// Закрываем в обратном порядке регистрации (LIFO)
 	m.mu.Lock()
 	for i := len(m.handlers) - 1; i >= 0; i-- {
+
 		if err := m.handlers[i](ctx); err != nil {
 			log.Printf("Shutdown error: %v", err)
 		}

@@ -22,17 +22,22 @@ type TaskRepository interface {
 }
 
 func NewTaskService(r TaskRepository, l *logger.AsyncLogger) *TaskService {
+
 	return &TaskService{repo: r, logger: l}
 }
 
 func (s *TaskService) Create(ctx context.Context, title, desc, status string) (*model.Task, error) {
 	if title == "" {
+
 		return nil, errs.ErrValidation
 	}
+
 	if status == "" {
 		status = model.StatusPending
 	}
+
 	if !model.IsValidStatus(status) {
+
 		return nil, errs.ErrValidation
 	}
 
@@ -45,9 +50,12 @@ func (s *TaskService) Create(ctx context.Context, title, desc, status string) (*
 		CreatedAt:   now,
 		UpdatedAt:   now,
 	}
+
 	if err := s.repo.Create(ctx, task); err != nil {
+
 		return nil, err
 	}
+
 	s.logger.Log(logger.Event{
 		Time:   now,
 		Action: "task_created",
@@ -57,28 +65,34 @@ func (s *TaskService) Create(ctx context.Context, title, desc, status string) (*
 			"status": task.Status,
 		},
 	})
+
 	return task, nil
 }
 
 func (s *TaskService) Get(ctx context.Context, id string) (*model.Task, error) {
 	t, err := s.repo.GetByID(ctx, id)
 	if err != nil {
+
 		return nil, err
 	}
+
 	s.logger.Log(logger.Event{
 		Time:   time.Now().UTC(),
 		Action: "task_viewed",
 		TaskID: t.ID,
 		Meta:   map[string]any{"status": t.Status},
 	})
+
 	return t, nil
 }
 
 func (s *TaskService) List(ctx context.Context, status *string) ([]model.Task, error) {
 	tasks, err := s.repo.List(ctx, status)
 	if err != nil {
+
 		return nil, err
 	}
+
 	s.logger.Log(logger.Event{
 		Time:   time.Now().UTC(),
 		Action: "tasks_listed",
@@ -87,5 +101,6 @@ func (s *TaskService) List(ctx context.Context, status *string) ([]model.Task, e
 			"filter": status,
 		},
 	})
+
 	return tasks, nil
 }
